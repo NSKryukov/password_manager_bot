@@ -1,0 +1,40 @@
+version: '2.1'
+
+services:
+  tarantool:
+    image: "tarantool/tarantool:2.10-ubuntu"
+    container_name: "tarantool_container"
+    hostname: "tarantool_host"
+    healthcheck:
+      test: [ "CMD-SHELL", "tarantool_is_up" ]
+      interval: 2s
+      timeout: 20s
+      retries: 30
+    volumes:
+      - <PATH_TO_DB_LOG>:/var/lib/tarantool
+    environment:
+      TARANTOOL_USER_NAME: <TARANTOOL_USER_NAME>
+      TARANTOOL_USER_PASSWORD: <TARANTOOL_USER_PASSWORD>
+    networks:
+      - app
+    ports:
+      - "3301:3301"
+
+  bot:
+    image: "password_manager:latest"
+    container_name: "bot_container"
+    networks:
+      - app
+    environment:
+      TARANTOOL_USER_NAME: <TARANTOOL_USER_NAME>
+      TARANTOOL_USER_PASSWORD: <TARANTOOL_USER_PASSWORD>
+      CHAT_BOT_TOKEN: <CHAT_BOT_TOKEN>
+    volumes:
+      - <PATH_TO_BOT_LOG>:/var/log/bot
+    depends_on:
+      tarantool:
+        condition: service_healthy
+
+networks:
+  app:
+    external: true
